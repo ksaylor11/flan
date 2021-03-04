@@ -36,13 +36,17 @@ class LatexReportBuilder(ReportBuilder):
         return self.report_header
 
     def add_vulnerable_services(self, scan_results: Dict[str, ScanResult]):
+
         for s, report in scan_results.items():
             self._append('\\item \\textbf{\\large ' + s + ' \\large}')
             vulns = report.vulns
             locations = report.locations
             num_vulns = len(vulns)
 
+            # adding a counting mechanism to minimize latex floats
+            count = 0
             for v in vulns:
+                count = count + 1
                 description = self.description_provider.get_description(v.name, v.vuln_type)
                 severity_name = v.severity_str
                 self._append('\\begin{figure}[h!]\n')
@@ -57,6 +61,8 @@ class LatexReportBuilder(ReportBuilder):
                              + description.text
                              + '\\\\ \\hline \\end{tabular}  ')
                 self._append('\\end{figure}\n')
+                if count % 25 == 0:
+                    self._append('\\clearpage\n')
 
             self._append('\\FloatBarrier\n\\textbf{The above '
                          + str(num_vulns)
