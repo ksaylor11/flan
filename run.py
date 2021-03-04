@@ -1,7 +1,7 @@
 import datetime
 import os
-import subprocess
 import re
+import subprocess
 
 if __name__ == "__main__":
 
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # check if directory exists
     if os.path.isdir(xml_dir) == False:
         os.mkdir(xml_dir)
-    report_file = os.path.join(root_dir, "reports", "{0}.html".format(print_time))
+    report_file = os.path.join(root_dir, "reports", "{0}.tex".format(print_time))
 
     # read ips
     ips_file = os.path.join(root_dir, 'ips.txt')
@@ -25,11 +25,11 @@ if __name__ == "__main__":
             latest_time = datetime.datetime.now()
             file_time = latest_time.strftime('%Y.%m.%d-%H.%M.%S')
             filename = os.path.join(xml_dir, '{0}.xml'.format(file_time))
-            cmd = "nmap -sV -v -oX \"{0}\" --script vulners --script ssl-enum-ciphers {1} ".format(filename, line)
+            cmd = "nmap -sV -v -oX \"{0}\" --script vulners --script ssl-enum-ciphers {1}".format(filename, line)
             subprocess.run(cmd)
 
     # make a nice latex report
-    cmd = "python output_report.py {0} {1} {2} html".format(xml_dir, report_file, ips_file)
+    cmd = "venv\Scripts\python.exe output_report.py {0} {1} {2} tex".format(xml_dir, report_file, ips_file)
     subprocess.run(cmd)
 
     # cleanup report
@@ -43,4 +43,3 @@ if __name__ == "__main__":
     r = re.sub(r'[%]', r'\\%', r, 0)
     with open(report_file, 'w') as new_report:
         new_report.write(r)
-
