@@ -5,12 +5,12 @@ from typing import IO
 from requests import Session
 
 from contrib.descriptions import CveProjectProvider, VulnDescriptionProvider
-from contrib.parsers import FlanXmlParser
+from contrib.parsers import FlanPlusXmlParser, FlanXmlParser
 from contrib.report_builders import ReportBuilder, LatexReportBuilder, MarkdownReportBuilder, JinjaHtmlReportBuilder, \
-    JsonReportBuilder
+    JsonReportBuilder, PlusLatexReportBuilder
 
 
-def create_report(parser: FlanXmlParser, builder: ReportBuilder, nmap_command: str, start_date: str, output_writer: IO,
+def create_report(parser: FlanPlusXmlParser, builder: ReportBuilder, nmap_command: str, start_date: str, output_writer: IO,
                   ip_reader: IO):
 
     builder.init_report(start_date, nmap_command)
@@ -46,6 +46,7 @@ def create_default_provider() -> VulnDescriptionProvider:
 def create_report_builder(report_type: str) -> ReportBuilder:
     builder_map = {
         'tex': lambda p: LatexReportBuilder(p),
+        'tex-plus': lambda p: PlusLatexReportBuilder(p),
         'md': lambda p: MarkdownReportBuilder(p),
         'html': lambda p: JinjaHtmlReportBuilder(p),
         'json': lambda p: JsonReportBuilder(p)
@@ -62,7 +63,10 @@ def main(dirname: str, output_file: str, ip_file: str, report_type: str = 'tex')
     nmap_command = ''
     start_date = ''
     builder = create_report_builder(report_type)
-    parser = FlanXmlParser()
+    if '-plus' in report_type:
+        parser = FlanPlusXmlParser()
+    else:
+        parser = FlanXmlParser()
 
     for entry in os.scandir(dirname):  # type: os.DirEntry
         if not (entry.is_file() and entry.name.endswith('.xml')):
