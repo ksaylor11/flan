@@ -56,7 +56,6 @@ class PlusLatexReportBuilder(PlusReportBuilder):
             num_vulns = len(vulns)
 
             # adding a counting mechanism to minimize latex floats
-            print(num_vulns)
             count = 0
             for v in vulns:
                 count = count + 1

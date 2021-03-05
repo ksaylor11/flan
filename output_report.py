@@ -129,5 +129,9 @@ def main(dirname: str, output_file: str, ip_file: str, report_type: str = 'tex')
 
 
 if __name__ == '__main__':
-    report_format = os.getenv('format', 'tex-plus')
-    main(*sys.argv[1:4], report_type=report_format)
+    report_format = os.getenv('format', None)
+    if report_format is None:
+        main(*sys.argv[1:5])
+    else:
+        main(*sys.argv[1:4], report_type=report_format)
+
