@@ -100,10 +100,11 @@ class PlusLatexReportBuilder(PlusReportBuilder):
 
             for c in ciphers:
                 self._append('\\begin{figure}[h!]\n')
-                self._append('\\begin{tabular}{|p{16cm}|}\\begin{tabular}{@{}p{15cm}>{\\raggedleft\\arraybackslash} p{0.5cm}@{}}\\textbf{'
-                             + c.name
-                             + '}'
-                             + '\\end{tabular}\\\\\n Key Exchange:'
+                self._append('\\begin{tabular}{|p{16cm}|}\\rowcolor[HTML]{'
+                             + self.tls_colors[c.strength_str]
+                             + '}\\begin{tabular}{@{}p{15cm}>{\\raggedleft\\arraybackslash} p{0.5cm}@{}}\\textbf{'
+                             + c.name + ' Grade: ' + c.strength
+                             + '}\\end{tabular}\\\\\n Key Exchange:'
                              + c.kex_info
                              + '\\\\ \\hline \\end{tabular}  ')
                 self._append('\\end{figure}\n')
