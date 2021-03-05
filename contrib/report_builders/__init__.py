@@ -1,4 +1,5 @@
 from .report_builder import ReportBuilder
+from .plus_report_builder import PlusReportBuilder
 from .latex_report_builder import LatexReportBuilder
 from .markdown_report_builder import MarkdownReportBuilder
 from .json_report_builder import JsonReportBuilder

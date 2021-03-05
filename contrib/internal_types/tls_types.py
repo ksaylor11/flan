@@ -1,14 +1,19 @@
 from collections import defaultdict
 from typing import List, Dict
 
-__all__ = ['Cipher', 'ScanResult', 'TLS']
+__all__ = ['Cipher', 'TlsScanResult', 'TLS', 'TlS_Grade']
 
 
 class TLS:
-    tls10 = 'TLSv1.0'
-    tls11 = 'TLSv1.1'
-    tls12 = 'TLSv1.2'
+    TLS10 = 'TLSv1.0'
+    TLS11 = 'TLSv1.1'
+    TLS12 = 'TLSv1.2'
 
+class TlS_Grade:
+    GOOD = 'Good'
+    FAIR = 'Fair'
+    POOR = 'Poor'
+    FAIL = 'Fail'
 
 class Cipher:
     """
@@ -26,12 +31,30 @@ class Cipher:
             'strength': self.strength,
         }
 
+    @staticmethod
+    def convert_strength(strength: str) -> str:
+        """
+        :return: Float severity value to text
+        """
+        if strength == 'A':
+            return 'Good'
+        elif strength == 'B':
+            return 'Fair'
+        elif strength == 'C':
+            return 'Poor'
+        else:
+            return 'Fail'
 
-class ScanResult:
+    @property
+    def strength_str(self) -> str:
+        """
+        :return: Text severity representation
+        """
+        return self.convert_strength(self.strength)
+
+class TlsScanResult:
     """
     Scan result representation
     """
     def __init__(self):
-        self.locations = defaultdict(list)  # type: Dict[str, List[str]]
-        self.vulns = []  # type: List[Vuln]
         self.ciphers = [] # type: List[Cipher]

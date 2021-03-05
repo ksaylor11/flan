@@ -3,19 +3,22 @@ from typing import Dict, Any, List, Set
 
 import xmltodict
 
-from contrib.internal_types import ScanResult, Vuln, Cipher
+from contrib.internal_types import TlsScanResult, Vuln, Cipher, ScanResult
+from .flan_xml_parser import FlanXmlParser
 
 
 __all__ = ['FlanPlusXmlParser']
 
 
-class FlanPlusXmlParser:
+class FlanPlusXmlParser(FlanXmlParser):
     """
     NMAP XML file reader and contents parser
     """
     def __init__(self):
+        super().__init__()
         self.results = defaultdict(ScanResult)
         self.vulnerable_services = []  # type: List[str]
+        self.tls_results = defaultdict(TlsScanResult)
         self.tls_versions = []  # type: List[str]
 
     @property
@@ -38,6 +41,13 @@ class FlanPlusXmlParser:
         :return: App names for services without detected vulnerabilities
         """
         return set(self.results) - set(self.vulnerable_services)
+
+    @property
+    def tls_dict(self) -> Dict[str, ScanResult]:
+        """
+        :return: tls versions with cipher suites
+        """
+        return {version: self.tls_results[version] for version in self.tls_versions}
 
     def parse(self, data: Dict[str, Any]):
         """
@@ -69,31 +79,39 @@ class FlanPlusXmlParser:
 
         self.results[app_name].vulns.append(Vuln(vuln_name, vuln_type, severity))
 
-    def parse_ciphers(self, tls_version: str, cipher: List[Dict[str, Any]]):
-        cipher_name = ''
-        key_exchange = ''
-        strength = ''
-        for field in cipher:
-            if field['@key'] == 'name':
-                cipher_name = field['#text']
-            elif field['@key'] == 'kex_info':
-                key_exchange = field['#text']
-            elif field['@key'] == 'strength':
-                strength = field['#text']
-        self.results[tls_version].ciphers.append(Cipher(cipher_name, key_exchange, strength))
+    def parse_ciphers(self, tls_version: str, ciphers: Dict[str, Any]):
+        if 'table' not in ciphers:
+            print('ERROR in script: ' + ciphers['@key'] +" tls: " + tls_version)
+            return
+
+        cipher_table = ciphers['table']
+        for c in cipher_table:
+            cipher_name = ''
+            key_exchange = ''
+            strength = ''
+            for e in c['elem']:
+                if e['@key'] == 'name':
+                    cipher_name = e['#text']
+                elif e['@key'] == 'kex_info':
+                    key_exchange = e['#text']
+                elif e['@key'] == 'strength':
+                    strength = e['#text']
+            self.tls_results[tls_version].ciphers.append(Cipher(cipher_name, key_exchange, strength))
 
     def parse_tls_version(self, app_name: str, table: Dict[str, Any]):
         if 'table' not in table:
             print('ERROR in script: ' + table['@key'] +" app: " + app_name)
             return
         tls_version = table['@key']
-        self.tls_versions.append(tls_version['@key'])
-        cipher_table = table['table']['table']
+        self.tls_versions.append(tls_version)
+        cipher_table = table['table']
         if isinstance(cipher_table, list):
             for cipher in cipher_table:
-                self.parse_ciphers(tls_version, cipher['elem'])
+                if cipher['@key'] == 'ciphers':
+                    self.parse_ciphers(tls_version, cipher)
         else:
-            self.parse_ciphers(tls_version, cipher_table['elem'])
+            if cipher_table['@key'] == 'ciphers':
+                self.parse_ciphers(tls_version, cipher_table)
 
     def parse_script(self, ip_addr: str, port: str, app_name: str, script: Dict[str, Any]):
         if 'table' not in script:
@@ -116,9 +134,9 @@ class FlanPlusXmlParser:
         tls_table = script['table']
         if isinstance(tls_table, list):
             for tls_version in tls_table:
-                self.parse_tls_version(app_name, tls_version['elem'])
+                self.parse_tls_version(app_name, tls_version)
         else:
-            self.parse_tls_version(app_name, tls_table['elem'])
+            self.parse_tls_version(app_name, tls_table)
 
     def parse_port(self, ip_addr: str, port: Dict[str, Any]):
         if port['state']['@state'] == 'closed':

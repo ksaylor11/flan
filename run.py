@@ -29,7 +29,7 @@ if __name__ == "__main__":
             subprocess.run(cmd)
 
     # make a nice latex report
-    cmd = "venv\Scripts\python.exe output_report.py {0} {1} {2} tex".format(xml_dir, report_file, ips_file)
+    cmd = "venv\Scripts\python.exe output_report.py {0} {1} {2}".format(xml_dir, report_file, ips_file)
     subprocess.run(cmd)
 
     # cleanup report
