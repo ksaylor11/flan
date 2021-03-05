@@ -54,7 +54,7 @@ if __name__ == "__main__":
             r = re.sub(r'[$]', r'\\$', r, 0)
             r = re.sub(r'[#]', r'\\#', r, 0)
             r = re.sub(r'[%]', r'\\%', r, 0)
-            with open(report_file, 'w') as new_report:
+            with open(tex, 'w') as new_report:
                 new_report.write(r)
 
             cmd = 'pdflatex -quiet -output-directory {0} {1}'.format(report_dir, tex)
