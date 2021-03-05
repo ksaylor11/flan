@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import IO
+from typing import IO, List
 
 from requests import Session
 
@@ -11,7 +11,7 @@ from contrib.report_builders import ReportBuilder, LatexReportBuilder, MarkdownR
 
 
 def create_report(parser: FlanXmlParser, builder: ReportBuilder, nmap_command: str, start_date: str, output_writer: IO,
-                  ip_reader: IO):
+                  ip_reader: List[str]):
 
     builder.init_report(start_date, nmap_command)
 
@@ -34,7 +34,7 @@ def create_report(parser: FlanXmlParser, builder: ReportBuilder, nmap_command: s
 
 
 def create_plus_report(parser: FlanPlusXmlParser, builder: PlusReportBuilder, nmap_command: str, start_date: str, output_writer: IO,
-                  ip_reader: IO):
+                  ip_reader: List[str]):
 
     builder.init_report(start_date, nmap_command)
 
@@ -103,7 +103,7 @@ def create_plus_report_builder(report_type: str) -> PlusReportBuilder:
     return builder_map[report_type](provider)
 
 
-def main(dirname: str, output_file: str, ip_file: str, report_type: str = 'tex'):
+def main(xml_file: str, output_file: str, ip_address: str, report_type: str = 'tex'):
     nmap_command = ''
     start_date = ''
     if '-plus' in report_type:
@@ -113,19 +113,16 @@ def main(dirname: str, output_file: str, ip_file: str, report_type: str = 'tex')
         builder = create_report_builder(report_type)
         parser = FlanXmlParser()
 
-    for entry in os.scandir(dirname):  # type: os.DirEntry
-        if not (entry.is_file() and entry.name.endswith('.xml')):
-            continue
-        data = parser.read_xml_file(entry.path)
-        parser.parse(data)
-        nmap_command = parse_nmap_command(data['nmaprun']['@args'])
-        start_date = data['nmaprun']['@startstr']
+    data = parser.read_xml_file(xml_file)
+    parser.parse(data)
+    nmap_command = parse_nmap_command(data['nmaprun']['@args'])
+    start_date = data['nmaprun']['@startstr']
 
-    with open(output_file, 'w+') as output, open(ip_file) as ip_source:
+    with open(output_file, 'w+') as output:
         if '-plus' in report_type:
-            create_plus_report(parser, builder, nmap_command, start_date, output, ip_source)
+            create_plus_report(parser, builder, nmap_command, start_date, output, [ip_address])
         else:
-            create_report(parser, builder, nmap_command, start_date, output, ip_source)
+            create_report(parser, builder, nmap_command, start_date, output, [ip_address])
 
 
 if __name__ == '__main__':
